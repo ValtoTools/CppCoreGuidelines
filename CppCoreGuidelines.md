@@ -1,6 +1,6 @@
 # <a name="main"></a>C++ Core Guidelines
 
-November 27, 2017
+December 26, 2017
 
 
 Editors:
@@ -1736,7 +1736,7 @@ Many traditional interface functions (e.g., UNIX signal handlers) use error code
 
 ##### Alternative
 
-If you can't use exceptions (e.g. because your code is full of old-style raw-pointer use or because there are hard-real-time constraints), consider using a style that returns a pair of values:
+If you can't use exceptions (e.g., because your code is full of old-style raw-pointer use or because there are hard-real-time constraints), consider using a style that returns a pair of values:
 
     int val;
     int error_code;
@@ -1789,7 +1789,7 @@ Consider:
         return res;
     }
 
-Who deletes the returned `X`? The problem would be harder to spot if compute returned a reference.
+Who deletes the returned `X`? The problem would be harder to spot if `compute` returned a reference.
 Consider returning the result by value (use move semantics if the result is large):
 
     vector<double> compute(args)  // good
@@ -2219,7 +2219,7 @@ We might write
 
 This violated the rule [against uninitialized variables](#Res-always),
 the rule against [ignoring ownership](#Ri-raw),
-and the rule [against magic constants](#Res-magic) .
+and the rule [against magic constants](#Res-magic).
 In particular, someone has to remember to somewhere write
 
     if (owned) delete inp;
@@ -2253,7 +2253,7 @@ Presumably, a bit of checking for potential errors would be added in real code.
 ##### Enforcement
 
 * Hard, it is hard to decide what rule-breaking code is essential
-* flag rule suppression that enable rule-violations to cross interfaces
+* Flag rule suppression that enable rule-violations to cross interfaces
 
 # <a name="S-functions"></a>F: Functions
 
@@ -2997,9 +2997,9 @@ Such older advice is now obsolete; it does not add value, and it interferes with
     vector<int> g(const vector<int>& vx)
     {
         // ...
-        f() = vx;   // prevented by the "const"
+        fct() = vx;   // prevented by the "const"
         // ...
-        return f(); // expensive copy: move semantics suppressed by the "const"
+        return fct(); // expensive copy: move semantics suppressed by the "const"
     }
 
 The argument for adding `const` to a return value is that it prevents (very rare) accidental access to a temporary.
@@ -5968,6 +5968,7 @@ To prevent slicing, because the normal copy operations will copy only the base p
 ##### Example
 
     class B { // GOOD: base class suppresses copying
+    public:
         B(const B&) = delete;
         B& operator=(const B&) = delete;
         virtual unique_ptr<B> clone() { return /* B object */; }
@@ -6088,6 +6089,8 @@ A `unique_ptr` can be moved, but not copied. To achieve that its copy operations
         auto pi2 {pi};      // error: no move constructor from lvalue
         auto pi3 {make()};  // OK, move: the result of make() is an rvalue
     }
+
+Note that deleted methods should be public.
 
 ##### Enforcement
 
@@ -12191,8 +12194,9 @@ If you really need to break out a loop, a `break` is typically better than alter
         break;
     case Warning:
         write_event_log();
+        // Bad - implicit fallthrough
     case Error:
-        display_error_window(); // Bad
+        display_error_window();
         break;
     }
 
@@ -12206,7 +12210,7 @@ It is easy to overlook the fallthrough. Be explicit:
         write_event_log();
         // fallthrough
     case Error:
-        display_error_window(); // Bad
+        display_error_window();
         break;
     }
 
@@ -12220,7 +12224,7 @@ In C++17, use a `[[fallthrough]]` annotation:
         write_event_log();
         [[fallthrough]];        // C++17
     case Error:
-        display_error_window(); // Bad
+        display_error_window();
         break;
     }
 
@@ -13836,7 +13840,7 @@ This implies that we cannot safely refer to local objects in `use()` from the th
 
 ##### Note
 
-Make "immortal threads" globals, put them in an enclosing scope, or put them on the on the free store rather than `detach()`.
+Make "immortal threads" globals, put them in an enclosing scope, or put them on the free store rather than `detach()`.
 [don't `detach`](#Rconc-detached_thread).
 
 ##### Note
@@ -16287,7 +16291,7 @@ The ability to specify a meaningful semantics is a defining characteristic of a 
                      && has_multiply<T>
                      && has_divide<T>;
 
-    template<Number N> auto algo(const N& a, const N& b) // use two numbers
+    template<Number N> auto algo(const N& a, const N& b)
     {
         // ...
         return a + b;
@@ -16295,7 +16299,7 @@ The ability to specify a meaningful semantics is a defining characteristic of a 
 
     int x = 7;
     int y = 9;
-    auto z = algo(x, y);   // z = 18
+    auto z = algo(x, y);   // z = 16
 
     string xx = "7";
     string yy = "9";
@@ -16311,7 +16315,7 @@ Concepts with multiple operations have far lower chance of accidentally matching
 * Flag uses of `enable_if` that appears to simulate single-operation `concepts`.
 
 
-### <a name="RT-operations"></a>T.21: Require a complete set of operations for a concept
+### <a name="Rt-complete"></a>T.21: Require a complete set of operations for a concept
 
 ##### Reason
 
@@ -16397,7 +16401,7 @@ Ideally, that rule should be language supported by giving you comparison operato
 
 ##### Enforcement
 
-* Flag classes the support "odd" subsets of a set of operators, e.g., `==` but not `!=` or `+` but not `-`.
+* Flag classes that support "odd" subsets of a set of operators, e.g., `==` but not `!=` or `+` but not `-`.
   Yes, `std::string` is "odd", but it's too late to change that.
 
 
@@ -17865,6 +17869,7 @@ If you intend for a class to match a concept, verifying that early saves users p
 ##### Example
 
     class X {
+    public:
         X() = delete;
         X(const X&) = default;
         X(X&&) = default;
